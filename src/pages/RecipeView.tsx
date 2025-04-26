@@ -4,6 +4,9 @@ import Navbar from "@/components/Navbar";
 import RecipeDetail from "@/components/RecipeDetail";
 import { recipes } from "@/data/mock";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const RecipeView = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +27,12 @@ const RecipeView = () => {
             <p className="mb-6 text-gray-600">
               Sorry, the recipe you're looking for doesn't exist or has been removed.
             </p>
+            <Button asChild>
+              <Link to="/">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -33,7 +42,15 @@ const RecipeView = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <RecipeDetail recipe={recipe} />
+      <div className="container mx-auto px-4 py-6">
+        <Button variant="outline" size="sm" className="mb-6" asChild>
+          <Link to="/">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Recipes
+          </Link>
+        </Button>
+        <RecipeDetail recipe={recipe} />
+      </div>
       
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white py-8 mt-12">
