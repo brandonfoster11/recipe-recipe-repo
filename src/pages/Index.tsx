@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -38,11 +37,11 @@ const Index = () => {
                   The GitHub for recipes. Collaborate, version control, and build your cooking repertoire.
                 </p>
                 <div className="flex flex-wrap gap-4">
-                  <Button variant="default" className="bg-white text-emerald-700 hover:bg-gray-100">
-                    Create Recipe
+                  <Button variant="default" className="bg-white text-emerald-700 hover:bg-gray-100" asChild>
+                    <Link to="/create">Create Recipe</Link>
                   </Button>
-                  <Button variant="outline" className="border-white text-white hover:bg-emerald-700">
-                    Explore Recipes
+                  <Button variant="outline" className="border-white text-white hover:bg-emerald-700" asChild>
+                    <Link to="/explore">Explore Recipes</Link>
                   </Button>
                 </div>
               </div>
