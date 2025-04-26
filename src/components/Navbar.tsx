@@ -38,9 +38,11 @@ const Navbar = () => {
             <Star className="h-4 w-4 mr-2" />
             Star
           </Button>
-          <Button variant="outline" size="sm">
-            <User className="h-4 w-4 mr-2" />
-            Sign In
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/auth">
+              <User className="h-4 w-4 mr-2" />
+              Sign In
+            </Link>
           </Button>
         </div>
       </div>
