@@ -22,7 +22,7 @@ const App = () => (
           <Route path="/recipe/:id" element={<RecipeView />} />
           <Route path="/explore" element={<Index />} />
           <Route path="/trending" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/*" element={<Auth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

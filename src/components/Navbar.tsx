@@ -2,9 +2,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileCode, GitFork, Star, User } from "lucide-react";
+import { FileCode, GitFork, Star } from "lucide-react";
+import { SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
 
 const Navbar = () => {
+  const { isSignedIn } = useAuth();
+
   return (
     <nav className="border-b border-gray-200 bg-white py-4">
       <div className="container mx-auto flex items-center justify-between px-4">
@@ -38,12 +41,15 @@ const Navbar = () => {
             <Star className="h-4 w-4 mr-2" />
             Star
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/auth">
-              <User className="h-4 w-4 mr-2" />
-              Sign In
-            </Link>
-          </Button>
+          {isSignedIn ? (
+            <UserButton afterSignOutUrl="/" />
+          ) : (
+            <SignInButton mode="modal">
+              <Button variant="outline" size="sm">
+                Sign In
+              </Button>
+            </SignInButton>
+          )}
         </div>
       </div>
     </nav>
