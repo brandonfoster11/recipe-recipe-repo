@@ -2,27 +2,125 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
 
 const CreateRecipe = () => {
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!user) {
+      toast.error("You must be logged in to create a recipe");
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Simulate API request
-    setTimeout(() => {
+    try {
+      const formData = new FormData(e.currentTarget);
+      const title = formData.get("title") as string;
+      const description = formData.get("description") as string;
+      const ingredientsText = formData.get("ingredients") as string;
+      const instructionsText = formData.get("instructions") as string;
+
+      // First, create or get the user profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        throw profileError;
+      }
+
+      if (!profile) {
+        // Create profile if it doesn't exist
+        const { error: createProfileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: user.id,
+            username: user.username || `user_${user.id.slice(0, 8)}`,
+            name: user.fullName || "New User",
+            avatar_url: user.imageUrl || `https://www.gravatar.com/avatar/${user.id}?d=mp`
+          });
+
+        if (createProfileError) {
+          throw createProfileError;
+        }
+      }
+
+      // Create the recipe
+      const { data: recipe, error: recipeError } = await supabase
+        .from("recipes")
+        .insert({
+          name: title,
+          description: description,
+          author_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (recipeError) throw recipeError;
+
+      // Parse and insert ingredients
+      const ingredients = ingredientsText.split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+          const parts = line.trim().split(' ');
+          const quantity = parts[0];
+          const unit = parts[1];
+          const name = parts.slice(2).join(' ') || parts.slice(1).join(' ');
+          
+          return {
+            recipe_id: recipe.id,
+            name: name || line.trim(),
+            quantity: quantity || "1",
+            unit: unit && !name ? null : unit
+          };
+        });
+
+      if (ingredients.length > 0) {
+        const { error: ingredientsError } = await supabase
+          .from("ingredients")
+          .insert(ingredients);
+
+        if (ingredientsError) throw ingredientsError;
+      }
+
+      // Parse and insert steps
+      const steps = instructionsText.split('\n')
+        .filter(line => line.trim())
+        .map((step, index) => ({
+          recipe_id: recipe.id,
+          order_num: index + 1,
+          description: step.trim()
+        }));
+
+      if (steps.length > 0) {
+        const { error: stepsError } = await supabase
+          .from("steps")
+          .insert(steps);
+
+        if (stepsError) throw stepsError;
+      }
+
       toast.success("Recipe created successfully!");
+      navigate("/my-recipes");
+    } catch (error) {
+      console.error("Error creating recipe:", error);
+      toast.error("Failed to create recipe. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      navigate("/");
-    }, 1500);
+    }
   };
 
   // Redirect to auth page if user is not signed in
@@ -69,7 +167,7 @@ const CreateRecipe = () => {
             <Textarea
               id="ingredients"
               name="ingredients"
-              placeholder="List your ingredients (one per line)"
+              placeholder="List your ingredients (one per line)&#10;Example:&#10;2 cups flour&#10;1 tsp salt&#10;3 eggs"
               required
               className="min-h-[200px]"
             />
@@ -82,7 +180,7 @@ const CreateRecipe = () => {
             <Textarea
               id="instructions"
               name="instructions"
-              placeholder="Step by step instructions"
+              placeholder="Step by step instructions (one per line)"
               required
               className="min-h-[200px]"
             />

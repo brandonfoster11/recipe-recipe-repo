@@ -1,18 +1,21 @@
 
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import RecipeCard from "@/components/RecipeCard";
-import { recipes } from "@/data/mock";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Recipe } from "@/types";
 
 const MyRecipes = () => {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const navigate = useNavigate();
+  const [userRecipes, setUserRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -20,16 +23,77 @@ const MyRecipes = () => {
     }
   }, [isSignedIn, navigate]);
 
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserRecipes();
+    }
+  }, [user?.id]);
+
+  const fetchUserRecipes = async () => {
+    if (!user?.id) return;
+
+    try {
+      setLoading(true);
+      
+      // Get recipes with all related data
+      const { data: recipesData, error: recipesError } = await supabase
+        .from("recipes")
+        .select(`
+          *,
+          ingredients (*),
+          steps (*),
+          recipe_tags (tag),
+          profiles!recipes_author_id_fkey (*)
+        `)
+        .eq("author_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (recipesError) throw recipesError;
+
+      // Transform the data to match our Recipe type
+      const transformedRecipes: Recipe[] = (recipesData || []).map(recipe => ({
+        id: recipe.id,
+        name: recipe.name,
+        description: recipe.description,
+        coverImage: recipe.cover_image,
+        author: {
+          id: recipe.profiles?.id || user.id,
+          username: recipe.profiles?.username || user.username || "user",
+          name: recipe.profiles?.name || user.fullName || "User",
+          avatarUrl: recipe.profiles?.avatar_url || user.imageUrl || "",
+          bio: recipe.profiles?.bio
+        },
+        stars: recipe.stars,
+        forks: recipe.forks,
+        createdAt: recipe.created_at,
+        updatedAt: recipe.updated_at,
+        tags: recipe.recipe_tags?.map((tag: any) => tag.tag) || [],
+        ingredients: recipe.ingredients?.map((ing: any) => ({
+          id: ing.id,
+          name: ing.name,
+          quantity: ing.quantity,
+          unit: ing.unit
+        })) || [],
+        steps: recipe.steps?.map((step: any) => ({
+          id: step.id,
+          order: step.order_num,
+          description: step.description,
+          image: step.image
+        })) || [],
+        versions: [] // We'll implement this later if needed
+      }));
+
+      setUserRecipes(transformedRecipes);
+    } catch (error) {
+      console.error("Error fetching user recipes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isSignedIn) {
     return null;
   }
-
-  // Filter recipes by current user (mock data uses specific usernames)
-  // In a real app, this would filter by user ID
-  const userRecipes = recipes.filter(recipe => 
-    recipe.author.username === user?.username || 
-    recipe.author.username === "johndoe" // Mock data fallback
-  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -51,7 +115,11 @@ const MyRecipes = () => {
           </Button>
         </div>
 
-        {userRecipes.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">Loading your recipes...</p>
+          </div>
+        ) : userRecipes.length === 0 ? (
           <div className="text-center py-12">
             <div className="max-w-md mx-auto">
               <h3 className="text-xl font-semibold mb-2">No recipes yet</h3>
