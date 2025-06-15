@@ -38,9 +38,9 @@ const CreateRecipe = () => {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError && profileError.code !== 'PGRST116') {
+      if (profileError) {
         console.error("Profile error:", profileError);
         throw profileError;
       }
