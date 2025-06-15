@@ -1,24 +1,119 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import RecipeCard from "@/components/RecipeCard";
-import { recipes } from "@/data/mock";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GitFork, Star, FileCode } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Recipe } from "@/types";
 
 const Index = () => {
   const [category, setCategory] = useState<string | null>(null);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [trendingTags, setTrendingTags] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const trendingTags = ["breakfast", "dinner", "vegan", "dessert", "quick", "baking", "italian"];
+  // Fetch recipes and tags from Supabase
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        console.log("Fetching recipes...");
+        
+        // Fetch recipes with their authors, ingredients, steps, and tags
+        const { data: recipesData, error: recipesError } = await supabase
+          .from("recipes")
+          .select(`
+            *,
+            profiles:author_id (
+              id,
+              username,
+              name,
+              avatar_url
+            ),
+            ingredients (*),
+            steps (*),
+            recipe_tags (tag)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (recipesError) {
+          console.error("Error fetching recipes:", recipesError);
+          return;
+        }
+
+        console.log("Raw recipes data:", recipesData);
+
+        // Transform the data to match our Recipe type
+        const transformedRecipes: Recipe[] = recipesData?.map(recipe => ({
+          id: recipe.id,
+          name: recipe.name,
+          description: recipe.description,
+          coverImage: recipe.cover_image || undefined,
+          author: {
+            id: recipe.profiles?.id || '',
+            username: recipe.profiles?.username || 'Unknown',
+            name: recipe.profiles?.name || 'Unknown User',
+            avatarUrl: recipe.profiles?.avatar_url || `https://www.gravatar.com/avatar/${recipe.author_id}?d=mp`
+          },
+          stars: recipe.stars,
+          forks: recipe.forks,
+          createdAt: recipe.created_at,
+          updatedAt: recipe.updated_at,
+          tags: recipe.recipe_tags?.map((tag: any) => tag.tag) || [],
+          ingredients: recipe.ingredients?.map((ing: any) => ({
+            id: ing.id,
+            name: ing.name,
+            quantity: ing.quantity,
+            unit: ing.unit
+          })) || [],
+          steps: recipe.steps?.map((step: any) => ({
+            id: step.id,
+            order: step.order_num,
+            description: step.description,
+            image: step.image
+          })) || [],
+          versions: [] // We'll implement this later if needed
+        })) || [];
+
+        console.log("Transformed recipes:", transformedRecipes);
+        setRecipes(transformedRecipes);
+
+        // Extract unique tags for trending tags
+        const allTags = transformedRecipes.flatMap(recipe => recipe.tags);
+        const uniqueTags = Array.from(new Set(allTags)).slice(0, 7);
+        setTrendingTags(uniqueTags);
+
+      } catch (error) {
+        console.error("Error in fetchRecipes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipes();
+  }, []);
   
   // Get featured recipe (most stars)
-  const featuredRecipe = [...recipes].sort((a, b) => b.stars - a.stars)[0];
+  const featuredRecipe = recipes.length > 0 ? [...recipes].sort((a, b) => b.stars - a.stars)[0] : null;
   
   // Filter recipes by category if selected
   const filteredRecipes = category 
     ? recipes.filter(recipe => recipe.tags.includes(category))
     : recipes;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-lg text-gray-600">Loading recipes...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,6 +140,7 @@ const Index = () => {
                   </Button>
                 </div>
               </div>
+              {/* ... keep existing code (hero code illustration) */}
               <div className="hidden md:flex items-center justify-end">
                 <div className="aspect-square w-64 rounded-lg bg-white p-4 shadow-xl rotate-3 -mt-6 border border-emerald-200">
                   <div className="space-y-2">
@@ -83,75 +179,83 @@ const Index = () => {
         </section>
 
         {/* Featured Recipe */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Featured Recipe</h2>
-            <Link to="/explore" className="text-emerald-600 hover:text-emerald-700">
-              View all
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="aspect-video overflow-hidden rounded-lg">
-              <img
-                src={featuredRecipe.coverImage}
-                alt={featuredRecipe.name}
-                className="h-full w-full object-cover"
-              />
+        {featuredRecipe && (
+          <section className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Featured Recipe</h2>
+              <Link to="/explore" className="text-emerald-600 hover:text-emerald-700">
+                View all
+              </Link>
             </div>
-            <div className="flex flex-col justify-center">
-              <h3 className="mb-2 text-2xl font-bold">{featuredRecipe.name}</h3>
-              <div className="mb-3 flex items-center space-x-2">
-                <img
-                  src={featuredRecipe.author.avatarUrl}
-                  alt={featuredRecipe.author.username}
-                  className="h-6 w-6 rounded-full"
-                />
-                <span className="text-gray-700">{featuredRecipe.author.username}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="aspect-video overflow-hidden rounded-lg bg-gray-200 flex items-center justify-center">
+                {featuredRecipe.coverImage ? (
+                  <img
+                    src={featuredRecipe.coverImage}
+                    alt={featuredRecipe.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="text-gray-500">No image available</div>
+                )}
               </div>
-              <p className="mb-4 text-gray-600">{featuredRecipe.description}</p>
-              <div className="mb-6 flex flex-wrap gap-2">
-                {featuredRecipe.tags.map((tag) => (
-                  <Badge key={tag} variant="tag">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-4">
-                <Button variant="default" asChild>
-                  <Link to={`/recipe/${featuredRecipe.id}`}>View Recipe</Link>
-                </Button>
-                <Button variant="outline">
-                  <GitFork className="mr-2 h-4 w-4" />
-                  Fork Recipe
-                </Button>
+              <div className="flex flex-col justify-center">
+                <h3 className="mb-2 text-2xl font-bold">{featuredRecipe.name}</h3>
+                <div className="mb-3 flex items-center space-x-2">
+                  <img
+                    src={featuredRecipe.author.avatarUrl}
+                    alt={featuredRecipe.author.username}
+                    className="h-6 w-6 rounded-full"
+                  />
+                  <span className="text-gray-700">{featuredRecipe.author.username}</span>
+                </div>
+                <p className="mb-4 text-gray-600">{featuredRecipe.description}</p>
+                <div className="mb-6 flex flex-wrap gap-2">
+                  {featuredRecipe.tags.map((tag) => (
+                    <Badge key={tag} variant="tag">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <Button variant="default" asChild>
+                    <Link to={`/recipe/${featuredRecipe.id}`}>View Recipe</Link>
+                  </Button>
+                  <Button variant="outline">
+                    <GitFork className="mr-2 h-4 w-4" />
+                    Fork Recipe
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Categories */}
-        <section className="mb-8">
-          <h2 className="mb-4 text-xl font-bold">Browse By Category</h2>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant={category === null ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCategory(null)}
-            >
-              All
-            </Button>
-            {trendingTags.map((tag) => (
+        {trendingTags.length > 0 && (
+          <section className="mb-8">
+            <h2 className="mb-4 text-xl font-bold">Browse By Category</h2>
+            <div className="flex flex-wrap gap-2">
               <Button
-                key={tag}
-                variant={category === tag ? "default" : "outline"}
+                variant={category === null ? "default" : "outline"}
                 size="sm"
-                onClick={() => setCategory(tag)}
+                onClick={() => setCategory(null)}
               >
-                {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                All
               </Button>
-            ))}
-          </div>
-        </section>
+              {trendingTags.map((tag) => (
+                <Button
+                  key={tag}
+                  variant={category === tag ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCategory(tag)}
+                >
+                  {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                </Button>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Recipe Grid */}
         <section className="mb-12">
@@ -160,11 +264,22 @@ const Index = () => {
               ? `${category.charAt(0).toUpperCase() + category.slice(1)} Recipes`
               : "Recent Recipes"}
           </h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
-          </div>
+          {filteredRecipes.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredRecipes.map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">
+                {category ? `No recipes found for "${category}"` : "No recipes found. Create the first one!"}
+              </p>
+              <Button className="mt-4" asChild>
+                <Link to="/create">Create Recipe</Link>
+              </Button>
+            </div>
+          )}
         </section>
       </main>
       
