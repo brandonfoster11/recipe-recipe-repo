@@ -1,23 +1,128 @@
 
 import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import RecipeDetail from "@/components/RecipeDetail";
-import { recipes } from "@/data/mock";
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Recipe } from "@/types";
 
 const RecipeView = () => {
   const { id } = useParams<{ id: string }>();
-  const recipe = recipes.find((r) => r.id === id);
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     // Scroll to top when component mounts
     window.scrollTo(0, 0);
   }, [id]);
 
-  if (!recipe) {
+  useEffect(() => {
+    const fetchRecipe = async () => {
+      if (!id) {
+        setError(true);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        console.log("Fetching recipe with ID:", id);
+        
+        const { data: recipeData, error: recipeError } = await supabase
+          .from("recipes")
+          .select(`
+            *,
+            profiles:author_id (
+              id,
+              username,
+              name,
+              avatar_url
+            ),
+            ingredients (*),
+            steps (*),
+            recipe_tags (tag)
+          `)
+          .eq('id', id)
+          .single();
+
+        if (recipeError) {
+          console.error("Error fetching recipe:", recipeError);
+          setError(true);
+          setLoading(false);
+          return;
+        }
+
+        if (!recipeData) {
+          setError(true);
+          setLoading(false);
+          return;
+        }
+
+        console.log("Raw recipe data:", recipeData);
+
+        // Transform the data to match our Recipe type
+        const transformedRecipe: Recipe = {
+          id: recipeData.id,
+          name: recipeData.name,
+          description: recipeData.description,
+          coverImage: recipeData.cover_image || undefined,
+          author: {
+            id: recipeData.profiles?.id || '',
+            username: recipeData.profiles?.username || 'Unknown',
+            name: recipeData.profiles?.name || 'Unknown User',
+            avatarUrl: recipeData.profiles?.avatar_url || `https://www.gravatar.com/avatar/${recipeData.author_id}?d=mp`
+          },
+          stars: recipeData.stars,
+          forks: recipeData.forks,
+          createdAt: recipeData.created_at,
+          updatedAt: recipeData.updated_at,
+          tags: recipeData.recipe_tags?.map((tag: any) => tag.tag) || [],
+          ingredients: recipeData.ingredients?.map((ing: any) => ({
+            id: ing.id,
+            name: ing.name,
+            quantity: ing.quantity,
+            unit: ing.unit
+          })) || [],
+          steps: recipeData.steps?.map((step: any) => ({
+            id: step.id,
+            order: step.order_num,
+            description: step.description,
+            image: step.image
+          })) || [],
+          versions: [] // We'll implement this later if needed
+        };
+
+        console.log("Transformed recipe:", transformedRecipe);
+        setRecipe(transformedRecipe);
+
+      } catch (error) {
+        console.error("Error in fetchRecipe:", error);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipe();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto flex items-center justify-center px-4 py-16">
+          <div className="text-center">
+            <div className="text-lg text-gray-600">Loading recipe...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !recipe) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
