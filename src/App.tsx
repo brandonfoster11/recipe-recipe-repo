@@ -10,6 +10,7 @@ import RecipeView from "./pages/RecipeView";
 import Auth from "./pages/Auth";
 import CreateRecipe from "./pages/CreateRecipe";
 import MyRecipes from "./pages/MyRecipes";
+import Trending from "./pages/Trending";
 
 const queryClient = new QueryClient();
 
@@ -23,7 +24,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/recipe/:id" element={<RecipeView />} />
           <Route path="/explore" element={<Index />} />
-          <Route path="/trending" element={<Index />} />
+          <Route path="/trending" element={<Trending />} />
           <Route path="/create" element={<CreateRecipe />} />
           <Route path="/my-recipes" element={<MyRecipes />} />
           <Route path="/auth" element={<Auth />} />
