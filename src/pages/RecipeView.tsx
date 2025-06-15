@@ -170,7 +170,7 @@ const RecipeView = () => {
             </div>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };
