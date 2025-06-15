@@ -109,6 +109,10 @@ const RecipeView = () => {
     fetchRecipe();
   }, [id]);
 
+  const handleRecipeUpdate = (updatedRecipe: Recipe) => {
+    setRecipe(updatedRecipe);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -154,7 +158,7 @@ const RecipeView = () => {
             Back to Recipes
           </Link>
         </Button>
-        <RecipeDetail recipe={recipe} />
+        <RecipeDetail recipe={recipe} onRecipeUpdate={handleRecipeUpdate} />
       </div>
       
       {/* Footer */}
@@ -166,7 +170,7 @@ const RecipeView = () => {
             </div>
           </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 };
