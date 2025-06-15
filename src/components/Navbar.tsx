@@ -30,6 +30,9 @@ const Navbar = () => {
             <Link to="/explore" className="text-gray-600 hover:text-gray-900">Explore</Link>
             <Link to="/trending" className="text-gray-600 hover:text-gray-900">Trending</Link>
             <Link to="/categories" className="text-gray-600 hover:text-gray-900">Categories</Link>
+            {isSignedIn && (
+              <Link to="/my-recipes" className="text-gray-600 hover:text-gray-900">My Recipes</Link>
+            )}
           </div>
         </div>
         
@@ -91,6 +94,9 @@ const Navbar = () => {
                       <Link to="/explore" className="text-gray-600 hover:text-gray-900 py-2">Explore</Link>
                       <Link to="/trending" className="text-gray-600 hover:text-gray-900 py-2">Trending</Link>
                       <Link to="/categories" className="text-gray-600 hover:text-gray-900 py-2">Categories</Link>
+                      {isSignedIn && (
+                        <Link to="/my-recipes" className="text-gray-600 hover:text-gray-900 py-2">My Recipes</Link>
+                      )}
                       <div className="flex gap-2 mt-2">
                         <Button variant="ghost" size="sm">
                           <GitFork className="h-4 w-4 mr-2" />
