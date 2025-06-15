@@ -1,15 +1,36 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Recipe } from "@/types";
 import { GitFork, Star, Clock, FileCode } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 interface RecipeDetailProps {
   recipe: Recipe;
 }
 
 const RecipeDetail = ({ recipe }: RecipeDetailProps) => {
+  const handleStar = () => {
+    toast({
+      title: "Recipe Starred!",
+      description: `You starred "${recipe.name}"`,
+    });
+  };
+
+  const handleFork = () => {
+    toast({
+      title: "Recipe Forked!",
+      description: `You forked "${recipe.name}" to your recipes`,
+    });
+  };
+
+  const handleClone = () => {
+    toast({
+      title: "Recipe Cloned!",
+      description: "Recipe copied to your clipboard",
+    });
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -29,15 +50,15 @@ const RecipeDetail = ({ recipe }: RecipeDetailProps) => {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleStar}>
             <Star className="mr-2 h-4 w-4" />
             Star {recipe.stars}
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleFork}>
             <GitFork className="mr-2 h-4 w-4" />
             Fork {recipe.forks}
           </Button>
-          <Button variant="default" size="sm">
+          <Button variant="default" size="sm" onClick={handleClone}>
             <FileCode className="mr-2 h-4 w-4" />
             Clone
           </Button>

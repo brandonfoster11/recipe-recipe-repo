@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FileCode, GitFork, Star, Menu, X, Search } from "lucide-react";
 import { SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
+import { toast } from "@/components/ui/use-toast";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +16,20 @@ import {
 const Navbar = () => {
   const { isSignedIn } = useAuth();
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+
+  const handleGenericFork = () => {
+    toast({
+      title: "Fork Feature",
+      description: "Fork functionality coming soon! Select a specific recipe to fork it.",
+    });
+  };
+
+  const handleGenericStar = () => {
+    toast({
+      title: "Star Feature",
+      description: "Star functionality coming soon! You can star individual recipes.",
+    });
+  };
 
   return (
     <nav className="border-b border-gray-200 bg-white py-4">
@@ -55,11 +69,11 @@ const Navbar = () => {
           </Button>
           
           <div className="hidden md:flex space-x-2">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleGenericFork}>
               <GitFork className="h-4 w-4 mr-2" />
               Fork
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleGenericStar}>
               <Star className="h-4 w-4 mr-2" />
               Star
             </Button>
@@ -98,11 +112,11 @@ const Navbar = () => {
                         <Link to="/my-recipes" className="text-gray-600 hover:text-gray-900 py-2">My Recipes</Link>
                       )}
                       <div className="flex gap-2 mt-2">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={handleGenericFork}>
                           <GitFork className="h-4 w-4 mr-2" />
                           Fork
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={handleGenericStar}>
                           <Star className="h-4 w-4 mr-2" />
                           Star
                         </Button>
