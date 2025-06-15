@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -10,7 +11,8 @@ import { Recipe } from "@/types";
 
 const Index = () => {
   const [category, setCategory] = useState<string | null>(null);
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [allRecipes, setAllRecipes] = useState<Recipe[]>([]);
+  const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
   const [trendingTags, setTrendingTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -77,12 +79,22 @@ const Index = () => {
         })) || [];
 
         console.log("Transformed recipes:", transformedRecipes);
-        setRecipes(transformedRecipes);
+        setAllRecipes(transformedRecipes);
 
         // Extract unique tags for trending tags
         const allTags = transformedRecipes.flatMap(recipe => recipe.tags);
-        const uniqueTags = Array.from(new Set(allTags)).slice(0, 7);
-        setTrendingTags(uniqueTags);
+        const tagCounts = allTags.reduce((acc, tag) => {
+          acc[tag] = (acc[tag] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        
+        // Sort tags by frequency and take top 7
+        const sortedTags = Object.entries(tagCounts)
+          .sort(([,a], [,b]) => b - a)
+          .slice(0, 7)
+          .map(([tag]) => tag);
+        
+        setTrendingTags(sortedTags);
 
       } catch (error) {
         console.error("Error in fetchRecipes:", error);
@@ -94,13 +106,20 @@ const Index = () => {
     fetchRecipes();
   }, []);
   
-  // Get featured recipe (most stars)
-  const featuredRecipe = recipes.length > 0 ? [...recipes].sort((a, b) => b.stars - a.stars)[0] : null;
+  // Filter recipes whenever category or allRecipes changes
+  useEffect(() => {
+    if (category === null) {
+      setFilteredRecipes(allRecipes);
+    } else {
+      const filtered = allRecipes.filter(recipe => 
+        recipe.tags.some(tag => tag.toLowerCase() === category.toLowerCase())
+      );
+      setFilteredRecipes(filtered);
+    }
+  }, [category, allRecipes]);
   
-  // Filter recipes by category if selected
-  const filteredRecipes = category 
-    ? recipes.filter(recipe => recipe.tags.includes(category))
-    : recipes;
+  // Get featured recipe (most stars)
+  const featuredRecipe = allRecipes.length > 0 ? [...allRecipes].sort((a, b) => b.stars - a.stars)[0] : null;
 
   if (loading) {
     return (
