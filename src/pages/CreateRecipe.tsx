@@ -31,7 +31,9 @@ const CreateRecipe = () => {
       const ingredientsText = formData.get("ingredients") as string;
       const instructionsText = formData.get("instructions") as string;
 
-      // First, create or get the user profile
+      console.log("Creating recipe with user ID:", user.id);
+
+      // First, create or get the user profile using Clerk user ID directly
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -39,25 +41,29 @@ const CreateRecipe = () => {
         .single();
 
       if (profileError && profileError.code !== 'PGRST116') {
+        console.error("Profile error:", profileError);
         throw profileError;
       }
 
       if (!profile) {
+        console.log("Creating new profile for user:", user.id);
         // Create profile if it doesn't exist
         const { error: createProfileError } = await supabase
           .from("profiles")
           .insert({
             id: user.id,
-            username: user.username || `user_${user.id.slice(0, 8)}`,
+            username: user.username || `user_${user.id.slice(-8)}`,
             name: user.fullName || "New User",
             avatar_url: user.imageUrl || `https://www.gravatar.com/avatar/${user.id}?d=mp`
           });
 
         if (createProfileError) {
+          console.error("Create profile error:", createProfileError);
           throw createProfileError;
         }
       }
 
+      console.log("Creating recipe...");
       // Create the recipe
       const { data: recipe, error: recipeError } = await supabase
         .from("recipes")
@@ -69,7 +75,12 @@ const CreateRecipe = () => {
         .select()
         .single();
 
-      if (recipeError) throw recipeError;
+      if (recipeError) {
+        console.error("Recipe creation error:", recipeError);
+        throw recipeError;
+      }
+
+      console.log("Recipe created:", recipe);
 
       // Parse and insert ingredients
       const ingredients = ingredientsText.split('\n')
@@ -89,11 +100,15 @@ const CreateRecipe = () => {
         });
 
       if (ingredients.length > 0) {
+        console.log("Adding ingredients:", ingredients);
         const { error: ingredientsError } = await supabase
           .from("ingredients")
           .insert(ingredients);
 
-        if (ingredientsError) throw ingredientsError;
+        if (ingredientsError) {
+          console.error("Ingredients error:", ingredientsError);
+          throw ingredientsError;
+        }
       }
 
       // Parse and insert steps
@@ -106,11 +121,15 @@ const CreateRecipe = () => {
         }));
 
       if (steps.length > 0) {
+        console.log("Adding steps:", steps);
         const { error: stepsError } = await supabase
           .from("steps")
           .insert(steps);
 
-        if (stepsError) throw stepsError;
+        if (stepsError) {
+          console.error("Steps error:", stepsError);
+          throw stepsError;
+        }
       }
 
       toast.success("Recipe created successfully!");
