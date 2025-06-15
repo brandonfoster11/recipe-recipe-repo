@@ -1,5 +1,5 @@
 
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
@@ -10,7 +10,8 @@ import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const MyRecipes = () => {
-  const { isSignedIn, user } = useAuth();
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
