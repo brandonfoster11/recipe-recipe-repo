@@ -1,5 +1,5 @@
 
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
@@ -11,17 +11,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Recipe } from "@/types";
 
 const MyRecipes = () => {
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [userRecipes, setUserRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isSignedIn) {
+    if (!authLoading && !user) {
       navigate("/auth");
     }
-  }, [isSignedIn, navigate]);
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (user?.id) {
@@ -58,9 +57,9 @@ const MyRecipes = () => {
         coverImage: recipe.cover_image,
         author: {
           id: recipe.profiles?.id || user.id,
-          username: recipe.profiles?.username || user.username || "user",
-          name: recipe.profiles?.name || user.fullName || "User",
-          avatarUrl: recipe.profiles?.avatar_url || user.imageUrl || "",
+          username: recipe.profiles?.username || "user",
+          name: recipe.profiles?.name || "User",
+          avatarUrl: recipe.profiles?.avatar_url || "",
           bio: recipe.profiles?.bio
         },
         stars: recipe.stars,
@@ -91,7 +90,20 @@ const MyRecipes = () => {
     }
   };
 
-  if (!isSignedIn) {
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-lg text-gray-600">Loading...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return null;
   }
 

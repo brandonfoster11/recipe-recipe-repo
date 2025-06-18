@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,8 +10,7 @@ import Navbar from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 
 const CreateRecipe = () => {
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -19,6 +18,7 @@ const CreateRecipe = () => {
     e.preventDefault();
     if (!user) {
       toast.error("You must be logged in to create a recipe");
+      navigate("/auth");
       return;
     }
 
@@ -33,7 +33,7 @@ const CreateRecipe = () => {
 
       console.log("Creating recipe with user ID:", user.id);
 
-      // First, create or get the user profile using Clerk user ID directly
+      // First, ensure the user profile exists
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -52,9 +52,9 @@ const CreateRecipe = () => {
           .from("profiles")
           .insert({
             id: user.id,
-            username: user.username || `user_${user.id.slice(-8)}`,
-            name: user.fullName || "New User",
-            avatar_url: user.imageUrl || `https://www.gravatar.com/avatar/${user.id}?d=mp`
+            username: user.user_metadata?.username || `user_${user.id.slice(-8)}`,
+            name: user.user_metadata?.full_name || user.user_metadata?.name || "New User",
+            avatar_url: user.user_metadata?.avatar_url || `https://www.gravatar.com/avatar/${user.id}?d=mp`
           });
 
         if (createProfileError) {
@@ -143,9 +143,22 @@ const CreateRecipe = () => {
   };
 
   // Redirect to auth page if user is not signed in
-  if (!isSignedIn) {
+  if (!authLoading && !user) {
     navigate("/auth");
     return null;
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-lg text-gray-600">Loading...</div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
