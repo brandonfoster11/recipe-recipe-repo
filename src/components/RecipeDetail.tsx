@@ -1,11 +1,12 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Recipe } from "@/types";
 import { GitFork, Star, Clock, FileCode } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 
 interface RecipeDetailProps {
@@ -14,21 +15,21 @@ interface RecipeDetailProps {
 }
 
 const RecipeDetail = ({ recipe, onRecipeUpdate }: RecipeDetailProps) => {
-  const { isSignedIn, userId } = useAuth();
+  const { user } = useAuth();
   const [isStarred, setIsStarred] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Check if user has already starred this recipe
   useEffect(() => {
     const checkIfStarred = async () => {
-      if (!isSignedIn || !userId) return;
+      if (!user) return;
 
       try {
         const { data, error } = await supabase
           .from("stars")
           .select("id")
           .eq("recipe_id", recipe.id)
-          .eq("user_id", userId)
+          .eq("user_id", user.id)
           .single();
 
         setIsStarred(!!data);
@@ -39,14 +40,11 @@ const RecipeDetail = ({ recipe, onRecipeUpdate }: RecipeDetailProps) => {
     };
 
     checkIfStarred();
-  }, [recipe.id, isSignedIn, userId]);
+  }, [recipe.id, user]);
 
   const handleStar = async () => {
-    if (!isSignedIn) {
-      toast({
-        title: "Sign In Required",
-        description: "Please sign in to star recipes",
-      });
+    if (!user) {
+      toast.error("Please sign in to star recipes");
       return;
     }
 
@@ -59,7 +57,7 @@ const RecipeDetail = ({ recipe, onRecipeUpdate }: RecipeDetailProps) => {
           .from("stars")
           .delete()
           .eq("recipe_id", recipe.id)
-          .eq("user_id", userId);
+          .eq("user_id", user.id);
 
         if (error) throw error;
 
@@ -67,17 +65,14 @@ const RecipeDetail = ({ recipe, onRecipeUpdate }: RecipeDetailProps) => {
         const updatedRecipe = { ...recipe, stars: recipe.stars - 1 };
         onRecipeUpdate?.(updatedRecipe);
         
-        toast({
-          title: "Recipe Unstarred",
-          description: `You removed "${recipe.name}" from your starred recipes`,
-        });
+        toast.success(`You removed "${recipe.name}" from your starred recipes`);
       } else {
         // Add star
         const { error } = await supabase
           .from("stars")
           .insert({
             recipe_id: recipe.id,
-            user_id: userId,
+            user_id: user.id,
           });
 
         if (error) throw error;
@@ -86,28 +81,19 @@ const RecipeDetail = ({ recipe, onRecipeUpdate }: RecipeDetailProps) => {
         const updatedRecipe = { ...recipe, stars: recipe.stars + 1 };
         onRecipeUpdate?.(updatedRecipe);
         
-        toast({
-          title: "Recipe Starred!",
-          description: `You starred "${recipe.name}"`,
-        });
+        toast.success(`You starred "${recipe.name}"`);
       }
     } catch (error) {
       console.error("Error starring recipe:", error);
-      toast({
-        title: "Error",
-        description: "Failed to star recipe. Please try again.",
-      });
+      toast.error("Failed to star recipe. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleFork = async () => {
-    if (!isSignedIn) {
-      toast({
-        title: "Sign In Required",
-        description: "Please sign in to fork recipes",
-      });
+    if (!user) {
+      toast.error("Please sign in to fork recipes");
       return;
     }
 
@@ -119,14 +105,11 @@ const RecipeDetail = ({ recipe, onRecipeUpdate }: RecipeDetailProps) => {
         .from("forks")
         .select("id")
         .eq("original_recipe_id", recipe.id)
-        .eq("user_id", userId)
+        .eq("user_id", user.id)
         .single();
 
       if (existingFork) {
-        toast({
-          title: "Already Forked",
-          description: "You have already forked this recipe",
-        });
+        toast.error("You have already forked this recipe");
         setIsLoading(false);
         return;
       }
@@ -137,7 +120,7 @@ const RecipeDetail = ({ recipe, onRecipeUpdate }: RecipeDetailProps) => {
         .insert({
           original_recipe_id: recipe.id,
           forked_recipe_id: recipe.id, // For now, just reference the same recipe
-          user_id: userId,
+          user_id: user.id,
         });
 
       if (error) throw error;
@@ -145,16 +128,10 @@ const RecipeDetail = ({ recipe, onRecipeUpdate }: RecipeDetailProps) => {
       const updatedRecipe = { ...recipe, forks: recipe.forks + 1 };
       onRecipeUpdate?.(updatedRecipe);
 
-      toast({
-        title: "Recipe Forked!",
-        description: `You forked "${recipe.name}" to your recipes`,
-      });
+      toast.success(`You forked "${recipe.name}" to your recipes`);
     } catch (error) {
       console.error("Error forking recipe:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fork recipe. Please try again.",
-      });
+      toast.error("Failed to fork recipe. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -168,15 +145,9 @@ const RecipeDetail = ({ recipe, onRecipeUpdate }: RecipeDetailProps) => {
       .join('\n')}`;
 
     navigator.clipboard.writeText(recipeText).then(() => {
-      toast({
-        title: "Recipe Cloned!",
-        description: "Recipe copied to your clipboard",
-      });
+      toast.success("Recipe copied to your clipboard");
     }).catch(() => {
-      toast({
-        title: "Error",
-        description: "Failed to copy recipe to clipboard",
-      });
+      toast.error("Failed to copy recipe to clipboard");
     });
   };
 

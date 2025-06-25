@@ -12,27 +12,35 @@ import RecipeView from "./pages/RecipeView";
 import Trending from "./pages/Trending";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => {
+  return (
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/my-recipes" element={<MyRecipes />} />
-            <Route path="/create" element={<CreateRecipe />} />
-            <Route path="/recipe/:id" element={<RecipeView />} />
-            <Route path="/trending" element={<Trending />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/my-recipes" element={<MyRecipes />} />
+              <Route path="/create" element={<CreateRecipe />} />
+              <Route path="/recipe/:id" element={<RecipeView />} />
+              <Route path="/trending" element={<Trending />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
     </AuthProvider>
-  </QueryClientProvider>
-);
+  );
+};
 
 export default App;
