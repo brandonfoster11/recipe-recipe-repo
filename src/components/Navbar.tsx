@@ -26,6 +26,7 @@ const Navbar = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleGenericFork = () => {
     toast.success("Fork Feature - Fork functionality coming soon! Select a specific recipe to fork it.");
@@ -36,9 +37,22 @@ const Navbar = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-    toast.success("Signed out successfully");
+    if (isSigningOut) return; // Prevent multiple simultaneous sign-out attempts
+    
+    setIsSigningOut(true);
+    
+    try {
+      await signOut();
+      
+      // Force page refresh for clean state
+      window.location.href = '/auth';
+      
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      toast.error("Sign out failed. Please try again.");
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -120,9 +134,9 @@ const Navbar = () => {
                     <Link to="/my-recipes">My Recipes</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
+                  <DropdownMenuItem onClick={handleSignOut} disabled={isSigningOut}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
+                    {isSigningOut ? "Signing out..." : "Sign out"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

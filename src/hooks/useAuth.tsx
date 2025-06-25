@@ -25,6 +25,23 @@ export const useAuth = () => {
   return context;
 };
 
+// Cleanup function for auth state
+const cleanupAuthState = () => {
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -55,9 +72,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error);
+    try {
+      console.log("Starting sign out process...");
+      
+      // Clean up auth state first
+      cleanupAuthState();
+      
+      // Attempt global sign out
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      
+      if (error) {
+        console.error("Error during sign out:", error);
+        // Even if there's an error, we continue with cleanup
+      }
+      
+      // Force clear local state
+      setSession(null);
+      setUser(null);
+      
+      console.log("Sign out completed");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      // Force cleanup even on error
+      cleanupAuthState();
+      setSession(null);
+      setUser(null);
     }
   };
 
