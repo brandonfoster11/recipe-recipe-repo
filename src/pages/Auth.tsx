@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -165,6 +164,8 @@ const Auth = () => {
             
             <TabsContent value="signin">
               <div className="space-y-4">
+                {/* Temporarily hidden Google auth */}
+                {/*
                 <Button
                   type="button"
                   variant="outline"
@@ -201,6 +202,7 @@ const Auth = () => {
                     <span className="bg-gray-50 px-2 text-muted-foreground">Or continue with</span>
                   </div>
                 </div>
+                */}
 
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
@@ -239,6 +241,8 @@ const Auth = () => {
             
             <TabsContent value="signup">
               <div className="space-y-4">
+                {/* Temporarily hidden Google auth */}
+                {/*
                 <Button
                   type="button"
                   variant="outline"
@@ -275,6 +279,7 @@ const Auth = () => {
                     <span className="bg-gray-50 px-2 text-muted-foreground">Or continue with</span>
                   </div>
                 </div>
+                */}
 
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">

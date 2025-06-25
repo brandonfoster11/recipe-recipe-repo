@@ -10,6 +10,7 @@ import MyRecipes from "./pages/MyRecipes";
 import CreateRecipe from "./pages/CreateRecipe";
 import RecipeView from "./pages/RecipeView";
 import Trending from "./pages/Trending";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -34,6 +35,7 @@ const App = () => {
               <Route path="/create" element={<CreateRecipe />} />
               <Route path="/recipe/:id" element={<RecipeView />} />
               <Route path="/trending" element={<Trending />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -131,6 +131,9 @@ const Navbar = () => {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link to="/my-recipes">My Recipes</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
