@@ -1,10 +1,11 @@
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileCode, GitFork, Star, Menu, X, Search } from "lucide-react";
-import { SignInButton, UserButton, useAuth } from "@clerk/clerk-react";
-import { toast } from "@/components/ui/use-toast";
+import { FileCode, GitFork, Star, Menu, Search, User, LogOut } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Sheet,
   SheetContent,
@@ -12,23 +13,32 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Navbar = () => {
-  const { isSignedIn } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [isSearchVisible, setIsSearchVisible] = useState(false);
 
   const handleGenericFork = () => {
-    toast({
-      title: "Fork Feature",
-      description: "Fork functionality coming soon! Select a specific recipe to fork it.",
-    });
+    toast.success("Fork Feature - Fork functionality coming soon! Select a specific recipe to fork it.");
   };
 
   const handleGenericStar = () => {
-    toast({
-      title: "Star Feature",
-      description: "Star functionality coming soon! You can star individual recipes.",
-    });
+    toast.success("Star Feature - Star functionality coming soon! You can star individual recipes.");
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+    toast.success("Signed out successfully");
   };
 
   return (
@@ -44,7 +54,7 @@ const Navbar = () => {
             <Link to="/explore" className="text-gray-600 hover:text-gray-900">Explore</Link>
             <Link to="/trending" className="text-gray-600 hover:text-gray-900">Trending</Link>
             <Link to="/categories" className="text-gray-600 hover:text-gray-900">Categories</Link>
-            {isSignedIn && (
+            {user && (
               <Link to="/my-recipes" className="text-gray-600 hover:text-gray-900">My Recipes</Link>
             )}
           </div>
@@ -79,20 +89,49 @@ const Navbar = () => {
             </Button>
           </div>
           
-          {isSignedIn ? (
+          {user ? (
             <div className="flex items-center space-x-4">
               <Link to="/create">
                 <Button size="sm" variant="outline">Create Recipe</Button>
               </Link>
-              <UserButton afterSignOutUrl="/" />
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.user_metadata?.avatar_url} alt={user.user_metadata?.full_name || user.email} />
+                      <AvatarFallback>
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium">{user.user_metadata?.full_name || user.email}</p>
+                      <p className="w-[200px] truncate text-sm text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-recipes">My Recipes</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <div className="flex items-center space-x-2">
-              <SignInButton mode="modal">
-                <Button variant="outline" size="sm">
-                  Sign In
-                </Button>
-              </SignInButton>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/auth">Sign In</Link>
+              </Button>
               <div className="md:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
@@ -108,7 +147,7 @@ const Navbar = () => {
                       <Link to="/explore" className="text-gray-600 hover:text-gray-900 py-2">Explore</Link>
                       <Link to="/trending" className="text-gray-600 hover:text-gray-900 py-2">Trending</Link>
                       <Link to="/categories" className="text-gray-600 hover:text-gray-900 py-2">Categories</Link>
-                      {isSignedIn && (
+                      {user && (
                         <Link to="/my-recipes" className="text-gray-600 hover:text-gray-900 py-2">My Recipes</Link>
                       )}
                       <div className="flex gap-2 mt-2">

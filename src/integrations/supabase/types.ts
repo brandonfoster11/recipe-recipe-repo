@@ -299,7 +299,36 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      decrement_recipe_stars: {
+        Args: { p_recipe_id: string }
+        Returns: undefined
+      }
+      handle_new_user: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      increment_recipe_forks: {
+        Args: { p_recipe_id: string }
+        Returns: undefined
+      }
+      increment_recipe_stars: {
+        Args: { p_recipe_id: string }
+        Returns: undefined
+      }
+      update_recipe_forks: {
+        Args: { p_recipe_id: string; p_new_fork_count: number }
+        Returns: undefined
+      }
+      update_recipe_stars: {
+        Args:
+          | { p_recipe_id: string; p_new_star_count: number }
+          | { recipe_id: number; stars: number }
+        Returns: undefined
+      }
+      update_recipe_updated_at: {
+        Args: { p_recipe_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
