@@ -62,6 +62,7 @@ export type Database = {
           quantity: string
           recipe_id: string
           unit: string | null
+          updated_at: string
         }
         Insert: {
           id?: string
@@ -69,6 +70,7 @@ export type Database = {
           quantity: string
           recipe_id: string
           unit?: string | null
+          updated_at?: string
         }
         Update: {
           id?: string
@@ -76,6 +78,7 @@ export type Database = {
           quantity?: string
           recipe_id?: string
           unit?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -230,6 +233,7 @@ export type Database = {
           image: string | null
           order_num: number
           recipe_id: string
+          updated_at: string
         }
         Insert: {
           description: string
@@ -237,6 +241,7 @@ export type Database = {
           image?: string | null
           order_num: number
           recipe_id: string
+          updated_at?: string
         }
         Update: {
           description?: string
@@ -244,6 +249,7 @@ export type Database = {
           image?: string | null
           order_num?: number
           recipe_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
