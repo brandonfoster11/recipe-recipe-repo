@@ -154,7 +154,7 @@ const Index = () => {
                   <Button variant="default" className="bg-white text-emerald-700 hover:bg-gray-100" asChild>
                     <Link to="/create">Create Recipe</Link>
                   </Button>
-                  <Button variant="outline" className="border-white text-white hover:bg-emerald-700" asChild>
+                  <Button variant="outline" className="border-white text-white hover:bg-white hover:text-emerald-700 bg-white/10 backdrop-blur-sm" asChild>
                     <Link to="/explore">Explore Recipes</Link>
                   </Button>
                 </div>
